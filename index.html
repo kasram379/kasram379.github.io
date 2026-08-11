@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kasra Mohammadi — subsurface thermal energy &amp; grid congestion</title>
+<meta name="description" content="Kasra Mohammadi. MSc researcher at TU Delft working on aquifer thermal energy storage and electricity grid congestion in Rotterdam. Energy system modelling, Python, TESPy, SEAWAT.">
+<meta property="og:title" content="Kasra Mohammadi">
+<meta property="og:description" content="Aquifer thermal energy storage and electricity grid congestion. TU Delft &amp; Gemeente Rotterdam.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230B1E2B'/><path d='M4 20 C10 20 10 10 16 10 C22 10 22 20 28 20' stroke='%23D98A16' stroke-width='2.5' fill='none'/></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300..600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --paper:#EDF1F3;
+  --card:#F8FBFC;
+  --ink:#0B1E2B;
+  --ink-soft:#4A6472;
+  --rule:#C9D6DC;
+  --cold:#1E6E8C;
+  --warm:#D98A16;
+  --deep:#071620;
+
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Newsreader",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+
+  --key:var(--cold);
+}
+
+*{box-sizing:border-box}
+
+html{scroll-behavior:smooth}
+
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:19px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+
+a{color:inherit}
+
+:focus-visible{
+  outline:2px solid var(--warm);
+  outline-offset:3px;
+}
+
+/* ---------- utility type ---------- */
+
+.mono{
+  font-family:var(--mono);
+  font-size:.72rem;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+}
+
+.display{
+  font-family:var(--display);
+  font-variation-settings:"wdth" 112,"wght" 760;
+  line-height:.96;
+  letter-spacing:-.02em;
+  margin:0;
+}
+
+/* ---------- nav ---------- */
+
+.nav{
+  position:sticky;
+  top:0;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem;
+  padding:.85rem clamp(1.1rem,4vw,3.2rem);
+  background:color-mix(in srgb,var(--paper) 88%,transparent);
+  backdrop-filter:blur(9px);
+  border-bottom:1px solid var(--rule);
+}
+
+.nav-name{
+  font-family:var(--mono);
+  font-size:.74rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  text-decoration:none;
+  font-weight:500;
+}
+
+.nav-links{
+  display:flex;
+  gap:clamp(.7rem,2.4vw,1.7rem);
+}
+
+.nav-links a{
+  font-family:var(--mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  text-decoration:none;
+  padding-bottom:2px;
+  border-bottom:1px solid transparent;
+  transition:color .2s,border-color .2s;
+}
+
+.nav-links a:hover{color:var(--ink);border-bottom-color:var(--key)}
+
+/* ---------- page shell + thermal rail ---------- */
+
+.page{
+  position:relative;
+  max-width:1080px;
+  margin:0 auto;
+  padding:0 clamp(1.1rem,4vw,3.2rem) 0 clamp(1.1rem,4vw,3.2rem);
+}
+
+.rail{display:none}
+
+@media(min-width:900px){
+  .page{padding-left:6.5rem}
+  .rail{
+    display:block;
+    position:absolute;
+    top:3.5rem;
+    bottom:5rem;
+    left:3.1rem;
+    width:1px;
+    background:linear-gradient(to bottom,var(--cold) 0%,#3C7A85 34%,#7C8560 62%,var(--warm) 88%,var(--warm) 100%);
+  }
+}
+
+/* ---------- sections ---------- */
+
+.section{
+  position:relative;
+  padding:clamp(3.4rem,7vw,5.6rem) 0;
+  border-top:1px solid var(--rule);
+}
+
+.section:first-of-type{border-top:none}
+
+@media(min-width:900px){
+  .section::before{
+    content:"";
+    position:absolute;
+    left:-3.62rem;
+    top:calc(clamp(3.4rem,7vw,5.6rem) + .38rem);
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    background:var(--key);
+    box-shadow:0 0 0 4px var(--paper);
+  }
+  .section:first-of-type::before{top:3.1rem}
+}
+
+.eyebrow{
+  display:flex;
+  align-items:center;
+  gap:.8rem;
+  margin:0 0 1.9rem;
+}
+
+.eyebrow::after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:var(--rule);
+}
+
+.h2{
+  font-family:var(--display);
+  font-variation-settings:"wdth" 108,"wght" 680;
+  font-size:clamp(1.5rem,3.4vw,2.05rem);
+  line-height:1.1;
+  letter-spacing:-.015em;
+  margin:0 0 1rem;
+}
+
+.lede{
+  font-size:1.14rem;
+  color:var(--ink-soft);
+  max-width:64ch;
+}
+
+/* ---------- hero ---------- */
+
+.hero{padding-top:clamp(2.6rem,6vw,4.4rem)}
+
+.hero-name{
+  font-family:var(--mono);
+  font-size:.75rem;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  margin:0 0 1.6rem;
+  color:var(--ink-soft);
+}
+
+.hero-line{
+  font-size:clamp(2.35rem,7.4vw,5.1rem);
+  max-width:15ch;
+  margin-bottom:1.7rem;
+}
+
+.hero-line em{
+  font-style:normal;
+  color:var(--warm);
+}
+
+.hero-line .cool{color:var(--cold)}
+
+.hero-sub{
+  max-width:52ch;
+  font-size:1.16rem;
+  margin:0 0 2.4rem;
+}
+
+.hero-actions{display:flex;flex-wrap:wrap;gap:.7rem;margin-bottom:3.2rem}
+
+.btn{
+  font-family:var(--mono);
+  font-size:.72rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  text-decoration:none;
+  padding:.72rem 1.15rem;
+  border:1px solid var(--ink);
+  border-radius:2px;
+  transition:background .2s,color .2s;
+}
+
+.btn:hover{background:var(--ink);color:var(--paper)}
+
+.btn.ghost{border-color:var(--rule);color:var(--ink-soft)}
+.btn.ghost:hover{background:transparent;border-color:var(--ink);color:var(--ink)}
+
+/* ---------- cycle figure ---------- */
+
+.figure{
+  border:1px solid var(--rule);
+  background:var(--card);
+  border-radius:3px;
+  padding:1.25rem 1.1rem .9rem;
+}
+
+.figure svg{display:block;width:100%;height:auto}
+
+.figcaption{
+  font-family:var(--mono);
+  font-size:.66rem;
+  letter-spacing:.09em;
+  color:var(--ink-soft);
+  text-transform:uppercase;
+  margin-top:.8rem;
+  padding-top:.7rem;
+  border-top:1px solid var(--rule);
+  line-height:1.6;
+}
+
+.curve{
+  stroke-dasharray:1700;
+  stroke-dashoffset:1700;
+  animation:draw 2.6s ease-out .25s forwards;
+}
+
+.area{opacity:0;animation:fade 1.5s ease-out 1.5s forwards}
+
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fade{to{opacity:1}}
+
+/* ---------- now strip ---------- */
+
+.now{list-style:none;margin:0;padding:0;display:grid;gap:.85rem}
+
+.now li{
+  display:flex;
+  gap:.9rem;
+  align-items:baseline;
+  font-family:var(--mono);
+  font-size:.83rem;
+  letter-spacing:.01em;
+  text-transform:none;
+  line-height:1.55;
+}
+
+.now .dot{
+  flex:none;
+  width:7px;
+  height:7px;
+  border-radius:1px;
+  transform:translateY(-1px);
+}
+
+/* ---------- cards ---------- */
+
+.grid{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+
+@media(min-width:760px){
+  .grid.two{grid-template-columns:1fr 1fr}
+  .grid.three{grid-template-columns:repeat(3,1fr)}
+}
+
+.card{
+  background:var(--card);
+  padding:1.5rem 1.4rem;
+}
+
+.card h3{
+  font-family:var(--display);
+  font-variation-settings:"wdth" 104,"wght" 640;
+  font-size:1.06rem;
+  letter-spacing:-.005em;
+  margin:.45rem 0 .55rem;
+  line-height:1.25;
+}
+
+.card p{margin:0;font-size:1rem;color:var(--ink-soft)}
+
+.card .meta{
+  font-family:var(--mono);
+  font-size:.66rem;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:var(--key);
+}
+
+/* ---------- thesis block ---------- */
+
+.thesis{
+  border-left:3px solid var(--cold);
+  padding-left:1.6rem;
+  margin:2.2rem 0 1.8rem;
+}
+
+.thesis-title{
+  font-family:var(--display);
+  font-variation-settings:"wdth" 100,"wght" 620;
+  font-size:1.22rem;
+  line-height:1.3;
+  margin:0 0 .8rem;
+}
+
+.thesis p{margin:0 0 1rem;max-width:66ch}
+
+.chips{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:1.3rem}
+
+.chip{
+  font-family:var(--mono);
+  font-size:.66rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding:.34rem .6rem;
+  border:1px solid var(--rule);
+  border-radius:2px;
+  color:var(--ink-soft);
+  background:var(--card);
+}
+
+/* ---------- toolkit ---------- */
+
+.stack{display:grid;gap:1.6rem}
+
+@media(min-width:760px){.stack{grid-template-columns:repeat(2,1fr);gap:2.2rem 3rem}}
+
+.stack h4{
+  font-family:var(--mono);
+  font-size:.68rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin:0 0 .7rem;
+  padding-bottom:.5rem;
+  border-bottom:1px solid var(--rule);
+}
+
+.stack p{margin:0;font-size:1.01rem}
+
+/* ---------- footer ---------- */
+
+.footer{
+  background:var(--deep);
+  color:#B8C9D2;
+  margin-top:4rem;
+  padding:clamp(3rem,7vw,4.6rem) clamp(1.1rem,4vw,3.2rem);
+}
+
+.footer-inner{max-width:1080px;margin:0 auto}
+
+.footer .h2{color:#F3F7F8}
+
+.footer a{color:#F3F7F8}
+
+.contact{display:flex;flex-wrap:wrap;gap:.5rem 2rem;margin:1.8rem 0 2.6rem}
+
+.contact a{
+  font-family:var(--mono);
+  font-size:.8rem;
+  letter-spacing:.06em;
+  text-decoration:none;
+  border-bottom:1px solid rgba(217,138,22,.55);
+  padding-bottom:2px;
+}
+
+.contact a:hover{border-bottom-color:var(--warm)}
+
+.colophon{
+  font-family:var(--mono);
+  font-size:.66rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:#6E8794;
+  padding-top:1.6rem;
+  border-top:1px solid #1B3040;
+}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+  html{scroll-behavior:auto}
+  .curve{stroke-dashoffset:0}
+  .area{opacity:1}
+}
+</style>
+</head>
+
+<body>
+
+<nav class="nav">
+  <a class="nav-name" href="#top">Kasra Mohammadi</a>
+  <div class="nav-links">
+    <a href="#work">Work</a>
+    <a href="#research">Research</a>
+    <a href="#toolkit">Toolkit</a>
+    <a href="#offhours">Off&nbsp;hours</a>
+    <a href="#contact">Contact</a>
+  </div>
+</nav>
+
+<main class="page" id="top">
+  <div class="rail" aria-hidden="true"></div>
+
+  <!-- ============ HERO ============ -->
+  <section class="section hero" style="--key:#1E6E8C">
+    <p class="hero-name">Kasra Mohammadi · Rotterdam, NL</p>
+
+    <h1 class="display hero-line">Put <em>summer</em> underground. Take it back in <span class="cool">winter</span>.</h1>
+
+    <p class="hero-sub">
+      I'm an MSc researcher at TU Delft working on aquifer thermal energy storage —
+      and on the more awkward question underneath it: what do you do when a city wants to
+      electrify its heating but the grid is already full?
+    </p>
+
+    <div class="hero-actions">
+      <a class="btn" href="#research">Read the research</a>
+      <a class="btn ghost" href="#contact">Get in touch</a>
+    </div>
+
+    <!-- Signature figure: the seasonal ATES cycle -->
+    <figure class="figure" style="margin:0">
+      <svg viewBox="0 0 800 230" role="img" aria-label="Diagram of a seasonal aquifer thermal energy storage cycle: heat is injected underground in summer and recovered in winter.">
+        <defs>
+          <clipPath id="clipTop"><rect x="0" y="0" width="800" height="130"/></clipPath>
+          <clipPath id="clipBot"><rect x="0" y="130" width="800" height="100"/></clipPath>
+        </defs>
+
+        <!-- baseline: undisturbed aquifer -->
+        <line x1="40" y1="130" x2="770" y2="130" stroke="#C9D6DC" stroke-width="1" stroke-dasharray="3 4"/>
+        <text x="40" y="122" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1" fill="#4A6472">UNDISTURBED AQUIFER</text>
+
+        <!-- filled areas -->
+        <g class="area">
+          <path clip-path="url(#clipTop)"
+                d="M 40 168 C 70 180, 100 186, 130 184 C 190 180, 250 158, 285 130 C 340 78, 400 66, 455 70 C 520 76, 585 100, 645 130 C 690 152, 730 164, 770 168 L 770 130 L 40 130 Z"
+                fill="#D98A16" fill-opacity="0.17"/>
+          <path clip-path="url(#clipBot)"
+                d="M 40 168 C 70 180, 100 186, 130 184 C 190 180, 250 158, 285 130 C 340 78, 400 66, 455 70 C 520 76, 585 100, 645 130 C 690 152, 730 164, 770 168 L 770 130 L 40 130 Z"
+                fill="#1E6E8C" fill-opacity="0.15"/>
+        </g>
+
+        <!-- the curve -->
+        <path class="curve"
+              d="M 40 168 C 70 180, 100 186, 130 184 C 190 180, 250 158, 285 130 C 340 78, 400 66, 455 70 C 520 76, 585 100, 645 130 C 690 152, 730 164, 770 168"
+              fill="none" stroke="#0B1E2B" stroke-width="2" stroke-linecap="round"/>
+
+        <!-- annotations -->
+        <text x="455" y="52" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="1.4" fill="#B0700F">HEAT STORED</text>
+        <text x="130" y="207" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="1.4" fill="#1E6E8C">HEAT RECOVERED</text>
+
+        <!-- month ticks -->
+        <g font-family="IBM Plex Mono, monospace" font-size="10" fill="#8FA3AD" text-anchor="middle">
+          <text x="40" y="225">JAN</text>
+          <text x="222" y="225">APR</text>
+          <text x="405" y="225">JUL</text>
+          <text x="588" y="225">OCT</text>
+          <text x="770" y="225">DEC</text>
+        </g>
+      </svg>
+      <figcaption class="figcaption">
+        Fig. 1 — The whole idea in one line. Waste and solar heat go into the ground when nobody
+        needs them; they come back out on the coldest evening of the year, when the grid can least afford them.
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============ NOW ============ -->
+  <section class="section" id="now" style="--key:#2A7188">
+    <p class="mono eyebrow">Right now</p>
+    <ul class="now">
+      <li><span class="dot" style="background:#1E6E8C"></span><span>Finishing my MSc thesis at TU&nbsp;Delft — defending <strong>27 August 2026</strong>.</span></li>
+      <li><span class="dot" style="background:#3C7A85"></span><span>Energy system modelling at <strong>Gemeente Rotterdam</strong>: grid congestion, time-dependent transport tariffs, flexibility products.</span></li>
+      <li><span class="dot" style="background:#D98A16"></span><span>Based in Rotterdam. Persian, English, and Dutch that gets better every month.</span></li>
+    </ul>
+  </section>
+
+  <!-- ============ WORK ============ -->
+  <section class="section" id="work" style="--key:#31768A">
+    <p class="mono eyebrow">Work</p>
+    <h2 class="h2">Where the modelling meets the city</h2>
+    <p class="lede">
+      Most of my work sits between two things that don't naturally talk to each other:
+      the physics of heat in the ground, and the rules of an electricity market.
+    </p>
+
+    <div class="grid two" style="margin-top:2.2rem">
+      <!-- EDIT: your roles go here -->
+      <div class="card">
+        <p class="meta">Gemeente Rotterdam</p>
+        <h3>Energy system modelling</h3>
+        <p>
+          Modelling how buildings, heat pumps and thermal storage load the local network —
+          and what changes when tariffs move with the clock. Reviewing Dutch flexibility
+          products (congestion contracts, block flow) for whether they can actually carry a
+          thermal plant, or only look like they can.
+        </p>
+      </div>
+      <div class="card">
+        <p class="meta">TU Delft · MSc research</p>
+        <h3>Medium-temperature ATES for a congested grid</h3>
+        <p>
+          A coupled thermodynamic and groundwater study of the M4H Merwehaven redevelopment
+          in Rotterdam: roughly 2,500 homes and 50,000&nbsp;m² of commercial space, on a
+          network that has no room left.
+        </p>
+      </div>
+      <!-- EDIT: duplicate a .card block above to add earlier jobs, internships or student teams -->
+    </div>
+  </section>
+
+  <!-- ============ RESEARCH ============ -->
+  <section class="section" id="research" style="--key:#427C82">
+    <p class="mono eyebrow">Research</p>
+    <h2 class="h2">The thesis, in plain language</h2>
+
+    <div class="thesis">
+      <p class="thesis-title">
+        Mitigating Electricity Grid Congestion with Medium-Temperature Aquifer Thermal
+        Energy Storage — A Technical Feasibility Analysis
+      </p>
+      <p>
+        Rotterdam wants to turn its old harbour docks into a neighbourhood. The heating has to
+        be electric. The problem is that the grid there is already at capacity, and heat pumps
+        pull hardest on exactly the evening the network has least to give.
+      </p>
+      <p>
+        So I asked a narrower question: if you store heat in the aquifer beneath the site at a
+        higher temperature than conventional ATES, can you shrink the <em>contracted peak</em> —
+        not the annual energy, the peak — enough to matter?
+      </p>
+      <p>
+        The honest answer is a qualified one, and it's the part I find most interesting.
+        Standalone, medium-temperature storage costs you: annual electricity, money, emissions
+        all go up. The gain isn't reduction, it's <strong>redistribution</strong> — moving demand
+        off the hour the grid cares about. That trade only pays for itself in mixed deployments,
+        where part of the district runs on storage and part doesn't.
+      </p>
+      <div class="chips">
+        <span class="chip">TESPy</span>
+        <span class="chip">SEAWAT / MODFLOW</span>
+        <span class="chip">Python</span>
+        <span class="chip">Coupled thermo–hydro modelling</span>
+        <span class="chip">Load profiles</span>
+      </div>
+    </div>
+
+    <p class="lede" style="font-size:1.02rem">
+      Supervised by Phil Vardon and Martin Bloemendal (TU&nbsp;Delft), with Gemeente Rotterdam.
+      <!-- EDIT: once the thesis is in the TU Delft repository, link it here -->
+    </p>
+  </section>
+
+  <!-- ============ TOOLKIT ============ -->
+  <section class="section" id="toolkit" style="--key:#5A8078">
+    <p class="mono eyebrow">Toolkit</p>
+    <h2 class="h2">What I actually use</h2>
+
+    <div class="stack" style="margin-top:2.2rem">
+      <div>
+        <h4>Simulation</h4>
+        <p>TESPy for thermodynamic cycles and heat pump performance. SEAWAT / MODFLOW for
+        variable-density groundwater and heat transport. Coupling the two, which is where most
+        of the real work hides.</p>
+      </div>
+      <div>
+        <h4>Data &amp; code</h4>
+        <p>Python — NumPy, pandas, matplotlib — for everything from load-profile pipelines to
+        post-processing a few hundred simulation runs. A working reimplementation of the BDEW
+        standard load profiles, and the ALPG household generator wrangled into something usable.</p>
+      </div>
+      <div>
+        <h4>Energy systems</h4>
+        <p>Building and district demand modelling, ATES and heat pump system design, and the
+        Dutch regulatory side: ACM tariff structures, congestion contracts, DSO flexibility products.</p>
+      </div>
+      <div>
+        <h4>Writing it down</h4>
+        <p>LaTeX and TikZ, to the point of having opinions about float placement. I care about
+        figures that explain something rather than decorate a page.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ OFF HOURS ============ -->
+  <section class="section" id="offhours" style="--key:#D98A16">
+    <p class="mono eyebrow">Off hours</p>
+    <h2 class="h2">The rest of it</h2>
+    <p class="lede">
+      Things I do that nobody is paying me for, which is usually a good sign.
+    </p>
+
+    <div class="grid three" style="margin-top:2.2rem">
+      <div class="card" style="--key:#D98A16">
+        <p class="meta">Baking</p>
+        <h3>Bread, mostly Persian</h3>
+        <p>
+          Barbari is the one I keep coming back to — the flour paste brushed on top, the
+          ridges pressed in by hand. It behaves a lot like focaccia and nothing like it at
+          the same time. Hydration is a variable, and I treat it like one.
+        </p>
+      </div>
+      <div class="card" style="--key:#D98A16">
+        <p class="meta">Small tools</p>
+        <h3>Scripts that save me ten minutes</h3>
+        <p>
+          I build little things when they annoy me enough: an inbox triage system that
+          classifies mail with an LLM, calendar-aware profile generators, a scattering of
+          plotting utilities. Most are useful to exactly one person.
+        </p>
+      </div>
+      <div class="card" style="--key:#D98A16">
+        <p class="meta">Language</p>
+        <h3>Learning Dutch in public</h3>
+        <p>
+          Around B1 and climbing. Reading Dutch policy documents for work turned out to be a
+          surprisingly effective, if masochistic, study method.
+        </p>
+      </div>
+      <!-- EDIT: swap any of these three for your own — music, sport, photography, travel, whatever it is -->
+    </div>
+  </section>
+</main>
+
+<!-- ============ FOOTER / CONTACT ============ -->
+<footer class="footer" id="contact">
+  <div class="footer-inner">
+    <p class="mono" style="color:#7E96A2;margin:0 0 1rem">Contact</p>
+    <h2 class="h2">Happy to talk about heat, grids, or bread.</h2>
+    <p style="max-width:52ch;color:#9FB4BE;margin:1rem 0 0">
+      I'm finishing up in Delft and working in Rotterdam. If you're doing something in
+      subsurface energy, district heating, or grid flexibility, I'd like to hear about it.
+    </p>
+
+    <!-- EDIT: replace these with your real addresses -->
+    <div class="contact">
+      <a href="mailto:hello@example.com">hello@example.com</a>
+      <a href="https://www.linkedin.com/in/your-handle">LinkedIn</a>
+      <a href="https://github.com/your-handle">GitHub</a>
+    </div>
+
+    <p class="colophon">Kasra Mohammadi · Rotterdam · 2026</p>
+  </div>
+</footer>
+
+</body>
+</html>
