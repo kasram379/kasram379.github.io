@@ -1,0 +1,165 @@
+/* ---------------------------------------------------------------
+   kasramohammadi.com — shared styles
+   Palette borrows from the subject: cool aquifer blues at the top
+   of the link stack warming downward, like a thermal gradient.
+   --------------------------------------------------------------- */
+
+:root {
+  --ink:    #16222b;
+  --muted:  #5a6e79;
+  --paper:  #e9edee;
+  --line:   rgba(22, 34, 43, 0.16);
+  --cool:   #3e6c86;
+  --warm:   #b4762f;
+  --focus:  #3e6c86;
+
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Charter, Georgia, serif;
+  --sans:  system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink:   #e4e9ea;
+    --muted: #90a4ae;
+    --paper: #131c22;
+    --line:  rgba(228, 233, 234, 0.16);
+    --cool:  #7fb0c9;
+    --warm:  #d9a45c;
+    --focus: #7fb0c9;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.55;
+  display: flex;
+  justify-content: center;
+  padding: 8vh 20px 12vh;
+}
+
+main {
+  width: 100%;
+  max-width: 34rem;
+}
+
+/* --- masthead ------------------------------------------------- */
+
+.name {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.1rem, 8vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+.standfirst {
+  color: var(--muted);
+  margin: 0.7rem 0 0;
+  max-width: 30rem;
+  text-wrap: pretty;
+}
+
+.rule {
+  height: 1px;
+  background: var(--line);
+  border: 0;
+  margin: 2.4rem 0 0;
+}
+
+/* --- link stack ----------------------------------------------- */
+/* The gradient lives on the container, so adding or removing a row
+   keeps the cool-to-warm run intact without touching the CSS. */
+
+.stack {
+  margin: 0;
+  border-bottom: 1px solid var(--line);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(62, 108, 134, 0.09),
+    rgba(180, 118, 47, 0.11)
+  );
+}
+
+@media (prefers-color-scheme: dark) {
+  .stack {
+    background-image: linear-gradient(
+      to bottom,
+      rgba(127, 176, 201, 0.09),
+      rgba(217, 164, 92, 0.11)
+    );
+  }
+}
+
+.stack a {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  padding: 1.05rem 1rem;
+  border-top: 1px solid var(--line);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 140ms ease;
+}
+
+.stack a:hover,
+.stack a:focus-visible {
+  background-color: rgba(180, 118, 47, 0.16);
+}
+
+.stack a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.stack svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  stroke: var(--cool);
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.label { font-weight: 500; }
+
+.sub {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+footer {
+  margin-top: 2.6rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+footer a { color: inherit; }
+
+/* --- back link (contact page) --------------------------------- */
+
+.back {
+  display: inline-block;
+  margin-bottom: 2.2rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.back:hover { color: var(--ink); text-decoration: underline; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
