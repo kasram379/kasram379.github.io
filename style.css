@@ -68,6 +68,18 @@ main {
   text-wrap: pretty;
 }
 
+.portrait {
+  display: block;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 1.3rem;
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+
+
 .rule {
   height: 1px;
   background: var(--line);
