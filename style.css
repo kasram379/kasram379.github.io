@@ -175,3 +175,36 @@ footer a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+
+
+
+
+
+body { position: relative; background: #101923; }
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    /* bloom at tile centre */
+    radial-gradient(circle 210px at 50% 50%,
+      rgba(255,240,214,.16) 0 3%, rgba(198,58,48,.30) 8% 17%,
+      rgba(231,146,32,.22) 28%, rgba(250,199,117,.09) 44%, transparent 64%),
+    /* bloom at tile corners → staggered diamond lattice */
+    radial-gradient(circle 210px at 0% 0%,
+      rgba(255,240,214,.16) 0 3%, rgba(198,58,48,.30) 8% 17%,
+      rgba(231,146,32,.22) 28%, rgba(250,199,117,.09) 44%, transparent 64%),
+    /* small amber ring nodes at the lattice vertices */
+    radial-gradient(circle 9px at 0% 50%, transparent 0 28%, rgba(239,159,39,.42) 34% 62%, transparent 70%),
+    radial-gradient(circle 9px at 50% 0%, transparent 0 28%, rgba(239,159,39,.42) 34% 62%, transparent 70%),
+    /* the ruled blue lines */
+    repeating-linear-gradient( 45deg, rgba(133,178,226,.18) 0 1px, transparent 1px 311px),
+    repeating-linear-gradient(-45deg, rgba(133,178,226,.18) 0 1px, transparent 1px 311px);
+  background-size: 440px 440px, 440px 440px, 440px 440px, 440px 440px, auto, auto;
+}
+
+
